@@ -1,0 +1,27 @@
+{
+  "base_model": "models/bert-base-chinese",
+  "train_file": "data/expanded/train.jsonl",
+  "validation_file": "data/validation.jsonl",
+  "labels": [
+    "中性",
+    "喜悦",
+    "悲伤",
+    "愤怒",
+    "恐惧",
+    "惊讶",
+    "厌恶"
+  ],
+  "epochs": 5,
+  "batch_size": 4,
+  "accumulation_steps": 8,
+  "max_length": 128,
+  "learning_rate": 0.0002,
+  "weight_decay": 0.01,
+  "lora_rank": 8,
+  "lora_alpha": 16,
+  "seed": 42,
+  "memory_budget_mb": 2048,
+  "warmup_ratio": 0.1,
+  "resume_from": "",
+  "balance_classes": true
+}

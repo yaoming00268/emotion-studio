@@ -1,0 +1,10 @@
+# Install CUDA PyTorch separately using setup.ps1. Keep the bot environment light.
+transformers>=4.46,<5
+peft>=0.14,<0.19
+accelerate>=1.2,<2
+safetensors>=0.4.5,<1
+numpy>=1.26,<3
+pywebview>=5.3,<7
+pytest>=8,<10
+opencc-python-reimplemented>=0.1.7,<0.2
+beautifulsoup4>=4.12,<5

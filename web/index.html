@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://127.0.0.1:*; img-src 'self' data:;">
+  <title>Emotion Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<aside class="sidebar">
+  <div class="brand"><span class="brand-mark">e<span>·</span></span><div>EMOTION<span>STUDIO / 情感工作台</span></div></div>
+  <div class="nav-caption">工作空间</div>
+  <nav aria-label="工作空间">
+    <button class="nav-item active" data-page="training"><span class="nav-icon">▥</span>模型训练<span class="nav-index">01</span></button>
+    <button class="nav-item" data-page="dataset"><span class="nav-icon">☷</span>逐句标注<span class="nav-index">02</span></button>
+    <button class="nav-item" data-page="analysis"><span class="nav-icon">◎</span>本地分析<span class="nav-index">03</span></button>
+  </nav>
+  <div class="sidebar-note"><span class="dot"></span>本地独立工作空间<p>BERT 模型 · 固定情感标签<br>训练与分析使用独立进程</p></div>
+  <div class="gpu-card"><div class="eyebrow">计算设备</div><strong id="gpu-name">正在检测 NVIDIA GPU</strong><div id="gpu-memory" class="muted">CUDA / FP16</div><div class="budget"><span>默认显存预算</span><b>2 GB</b></div></div>
+  <div class="sidebar-footer">中文情感分类 / v0.1.0</div>
+</aside>
+<main>
+  <header class="topbar"><div><span class="project-pill">LOCAL</span><span id="page-breadcrumb">工作空间 / 模型训练</span></div><span id="connection" class="connection"><i></i>正在连接桌面桥接</span></header>
+  <section id="training-page" class="page active">
+    <div class="page-heading"><div><div class="eyebrow">BERT / SUPERVISED LEARNING</div><h1>训练中文情感模型</h1><p>给句子一个确定的标签，让模型学习情绪表达。</p></div><div class="actions"><button id="export-metrics" class="button secondary">导出指标</button><button id="stop-training" class="button danger" disabled>停止训练</button><button id="start-training" class="button primary">开始 CUDA 训练 <span>↗</span></button></div></div>
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-label">训练进度 <span id="run-state" class="badge">就绪</span></div><strong id="epoch-value">0 <small>/ 5 轮</small></strong><div class="progress-track"><i id="training-progress"></i></div></div>
+      <div class="stat"><div class="stat-label">验证准确率</div><strong id="accuracy-value">—</strong><div class="stat-foot" id="f1-value">宏 F1 · 等待训练</div></div>
+      <div class="stat"><div class="stat-label">验证交叉熵损失</div><strong id="loss-value">—</strong><div class="stat-foot" id="train-loss-value">参考标签与预测对比</div></div>
+      <div class="stat"><div class="stat-label">CUDA 峰值分配</div><strong id="memory-value">— <small>MB</small></strong><div class="stat-foot" id="reserved-value">训练结束后释放显存</div></div>
+    </div>
+    <div class="panel settings-panel">
+      <div class="panel-heading"><h2>训练设置</h2><span class="quiet-tag">LoRA · FP16 · 梯度检查点</span></div>
+      <div class="model-row"><label class="field grow">本地 BERT 基础模型<input id="base_model" value="models/bert-base-chinese" spellcheck="false"></label><button id="download-model" class="button secondary">准备基础模型</button><span id="model-ready" class="badge">未检查</span></div>
+      <div class="fields-grid paths"><label class="field"><span id="train-file-caption">训练集</span><input id="train_file" value="data/acg/train.jsonl"></label><label class="field">独立验证集<input id="validation_file" value="data/acg/validation.jsonl"></label></div>
+      <p id="training-data-note" class="muted">训练前检查参考标签与训练、验证集重叠。</p>
+      <label class="balance-option"><input id="balance_classes" type="checkbox" checked>训练时平衡类别抽样<span id="sampling-caption">评估保留原始分布。</span></label>
+      <div class="fields-grid parameters"><label class="field">训练轮次<input type="number" id="epochs" min="1" max="100" value="5"></label><label class="field">批大小<input type="number" id="batch_size" min="1" max="32" value="4"></label><label class="field">梯度累积<input type="number" id="accumulation_steps" min="1" max="128" value="8"></label><label class="field">序列长度<select id="max_length"><option>64</option><option>128</option><option selected>256</option><option>512</option></select></label><label class="field">学习率<input type="number" id="learning_rate" step="0.00005" min="0.0000001" max="0.01" value="0.0002"></label><label class="field">显存预算 / MB<input type="number" id="memory_budget_mb" min="768" max="32768" step="128" value="2048"></label></div>
+      <div class="settings-foot"><span id="effective-batch">有效批大小 32 · LoRA rank 8</span><span>预算约束 PyTorch 分配器；CUDA 上下文占用另计。</span></div>
+      <details><summary>继续训练与高级设置</summary><div class="fields-grid advanced"><label class="field">继续训练模型目录（留空新建）<input id="resume_from" placeholder="runs/…/best"></label><label class="field">LoRA rank<input id="lora_rank" type="number" value="8" min="1" max="64"></label><label class="field">LoRA alpha<input id="lora_alpha" type="number" value="16" min="1" max="128"></label><label class="field">随机种子<input id="seed" type="number" value="42"></label></div></details>
+    </div>
+    <div class="charts-grid"><div class="panel"><div class="panel-heading"><h2>交叉熵损失</h2><div class="legend"><span class="train">训练集</span><span class="validation">验证集</span></div></div><canvas id="loss-chart" aria-label="训练和验证损失曲线"></canvas></div><div class="panel"><div class="panel-heading"><h2>准确率</h2><div class="legend"><span class="train">训练集</span><span class="validation">验证集</span></div></div><canvas id="accuracy-chart" aria-label="训练和验证准确率曲线"></canvas></div></div>
+    <div class="charts-grid lower"><div class="panel"><div class="panel-heading"><h2>混淆矩阵 <span id="matrix-epoch"></span></h2><span class="muted">纵轴为参考标签 / 横轴为预测</span></div><div id="confusion" class="matrix-empty">完成一轮训练后显示验证集分类结果</div></div><div class="panel"><div class="panel-heading"><h2>各标签表现</h2><span class="muted">独立验证集</span></div><table class="metrics-table"><thead><tr><th>标签</th><th>精确率</th><th>召回率</th><th>F1</th><th>句数</th></tr></thead><tbody id="label-metrics"></tbody></table></div></div>
+    <div class="run-bar"><span class="dot"></span><span id="training-message">等待开始。首次使用请先准备基础模型。</span></div>
+  </section>
+  <section id="dataset-page" class="page">
+    <div class="page-heading"><div><div class="eyebrow">SENTENCE / LABEL</div><h1>逐句标注</h1><p>一行一句、一个情感标签。保留语境，选择最主要的表达。</p></div><div class="actions"><button id="use-expanded" class="button secondary" disabled>使用 ACG 训练集</button><button id="import-dataset" class="button secondary">导入数据</button><button id="save-dataset" class="button primary">另存标注集 ↗</button></div></div>
+    <div id="dataset-notice" class="notice">ACG 语料覆盖七类情感，保留来源与独立作品验证。模型初标、助手抽样复核有单独记录，自动标签不是人工金标。</div>
+    <div class="charts-grid corpus-quality" id="corpus-quality" hidden><div class="panel"><div class="panel-heading"><h2>ACG 来源构成</h2><span id="corpus-work-count" class="muted"></span></div><div id="corpus-sources" class="corpus-bars" aria-label="训练集来源分布"></div></div><div class="panel"><div class="panel-heading"><h2>标注与复核</h2><span class="quiet-tag">固定七类情感</span></div><p id="corpus-review" class="quality-copy"></p><p class="muted">验证与测试整部隔离作品；银标指标反映模型间一致性。抽样参考由助手阅读复核，尚不属于人工金标。</p></div></div>
+    <div class="panel"><div class="panel-heading"><h2>添加待标注文本</h2><span class="muted">新句子默认未标注</span></div><textarea id="new-samples" rows="2" placeholder="粘贴文本，按句拆分后逐一标注。"></textarea><div class="annotation-actions"><select id="new-label"><option value="">未标注</option></select><button id="add-samples" class="button secondary">拆句并添加</button><span class="muted">编辑在内存中；另存后可将新文件用于训练。</span></div></div>
+    <div class="panel dataset-panel"><div class="panel-heading"><h2>训练样本 <span id="sample-count"></span></h2><span id="dataset-distribution" class="muted"></span></div><div class="dataset-filters"><label>情感标签<select id="filter-label"><option value="">全部标签</option></select></label><label>复核状态<select id="filter-review"><option value="">全部状态</option><option value="not_reviewed">尚未逐句复核</option><option value="assistant_reviewed">助手已复核</option><option value="user_reviewed">用户已复核</option></select></label><span class="muted">展开来源可查看上下文与各模型分数。</span></div><table class="dataset-table"><thead><tr><th class="number-col">编号</th><th>句子（点击修改）</th><th class="label-col">参考标签</th><th class="provenance-col">来源 / 初标分数</th></tr></thead><tbody id="dataset-rows"></tbody></table><div class="pagination"><span id="dataset-file" class="muted"></span><div><button id="previous-page" class="button subtle">← 上一页</button><span id="page-number">1</span><button id="next-page" class="button subtle">下一页 →</button></div></div></div>
+  </section>
+  <section id="analysis-page" class="page">
+    <div class="page-heading"><div><div class="eyebrow">LOCAL / INFERENCE</div><h1>读取模型，分析句子</h1><p>加载已训练的 BERT 分类器。分析进程只执行预测。</p></div><span class="quiet-tag">独立模型服务 · localhost</span></div>
+    <div class="panel"><div class="panel-heading"><h2>已训练模型</h2><button id="refresh-runs" class="button subtle">刷新目录 ↻</button></div><div class="model-row"><select id="checkpoint" class="grow" aria-label="选择训练产物"><option value="">完成训练后在这里选择模型</option></select><select id="analysis-device" aria-label="分析设备"><option value="cuda">CUDA</option><option value="cpu">CPU</option></select><button id="load-analysis" class="button primary">加载模型</button><button id="unload-analysis" class="button secondary">释放显存</button></div><div class="analysis-model-foot"><span id="analysis-status" class="muted">尚未加载</span><button id="view-run-metrics" class="text-button">读取训练图表</button><button id="resume-selected" class="text-button">用于继续训练</button></div></div>
+    <div class="panel"><div class="panel-heading"><h2>待分析文本</h2><span class="muted">自动按句拆分</span></div><textarea id="analysis-text" rows="5" placeholder="例如：今天终于完成了期待已久的项目，真开心！"></textarea><div class="annotation-actions"><span class="muted">分类概率来自模型 softmax；不代表经过校准的心理状态置信度。</span><button id="predict" class="button primary">分析情感 ↗</button></div></div>
+    <div id="analysis-results" class="results-empty"><span class="result-symbol">◎</span><h3>等候一段表达</h3><p>每句话的情感标签和概率分布将在这里显示。</p></div>
+    <div class="service-note"><b>QQBot 接口</b><p>加载后，本地分析服务监听 <code>127.0.0.1:18765</code>。QQBot 读取服务描述文件即可使用 BERT；机器人进程无需安装 PyTorch。</p><code id="service-file"></code></div>
+  </section>
+  <div id="toast" role="status" aria-live="polite"></div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

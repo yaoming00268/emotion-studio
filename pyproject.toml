@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qqbot-emotion-studio"
+version = "0.1.0"
+description = "Independent BERT CUDA training and local inference with a pywebview desktop GUI"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+[project.scripts]
+emotion-studio = "emotionlab.__main__:main"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages.find]
+include = ["emotionlab*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
